@@ -1,0 +1,6 @@
+interface:
+  display_name: "视觉参考网页生图"
+  short_description: "拆分多张参考图角色，经确认后通过 ChatGPT 网页生成图片"
+  default_prompt: "Use $visual-reference-web-image to combine my reference images by role, confirm the plan, and generate through ChatGPT Web."
+policy:
+  allow_implicit_invocation: true
