@@ -12,7 +12,7 @@
 reference_id: A
 roles: [SUBJECT]
 confidence: high
-is_real_photo: false        # 真人照片时置 true，按 SKILL.md「真人照片参考」处理
+is_real_photo: false        # 真人照片时置 true，身份锚点提取示例见 examples.md 例6
 
 subject:
   face_shape:

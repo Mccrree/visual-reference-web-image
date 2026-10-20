@@ -1,27 +1,22 @@
-# Verified local compatibility
+# Codex 内置生图兼容与诊断
 
-Verified on 2026-09-26 with:
+本 skill 使用当前会话的内置 image_gen 能力。旧版的 Chrome relay、网页 DOM、image-use 版本和登录检查均已退出执行流程。
 
-- `image-use` 0.29.2
-- `chrome-use` 1.5.141
-- Chrome extension 0.5.26
-- Windows PowerShell and the Codex bundled Python runtime
+## 工具输入
 
-The installed `C:\Users\21450\.codex\skills\image-use\image-use` contains narrow compatibility fixes for the current ChatGPT and `chrome-use` surfaces:
+- 以当前工具 schema 为准，不把旧 CLI 参数映射为不存在的工具参数。
+- 当前 image_gen.imagegen 支持 prompt、referenced_image_paths、num_last_images_to_include 和 transparent_background。
+- 本地参考图先查看再附加；本地路径和对话最近图片选择机制不能同时使用。混合来源无法完整包含时，请用户重新附图。
+- 图像角色、输出比例与画面文字写在提示词中。不要伪造大小、质量、文件格式或目标目录参数。
 
-1. Accept `chrome-use eval` output prefixed with `eval @ `.
-2. Recognize the ARIA/contenteditable composer when `#prompt-textarea` is absent.
-3. Recognize `button[type="submit"][aria-label="Send"]` when the old send-button test id is absent.
-4. Capture `chrome-use` output through temporary files on Windows so its long-lived daemon cannot keep a pipe open indefinitely.
-5. Bring the ChatGPT tab to the foreground before submitting because hidden-tab clicks may be ignored.
-6. Confirm submission using the new `/c/<id>` route, an empty composer, or the Stop control because current pages may expose zero `[data-message-author-role="user"]` nodes.
+## 诊断顺序
 
-## Diagnostic order
+1. 检查内置工具是否在当前会话可用。不可用时说明当前会话缺少工具；不要求用户登录 Chrome，也不自动切换网页后端。
+2. 参考图缺失时检查本地文件路径和对话附图范围，确认必需的原始身份锚点确实传入。
+3. 工具仍在运行时等待现有调用；不要因没有立即返回就重复提交。失败、限流或结果状态不明时报告实际状态，避免自动重试消耗额外额度。
+4. 使用工具返回的真实图片或路径检查结果。没有本地输出路径时可以先展示结果，但不能声称已保存到工作区。
+5. 输出用于项目或用户指定目录时，将返回的实际文件复制到目标；保留透明通道，默认不覆盖已有文件。
 
-1. Run `scripts/generate.ps1 -Doctor`.
-2. Confirm that the relay is connected and the intended Chrome profile is signed in to `chatgpt.com`.
-3. If a run says submission is uncertain, inspect the existing conversation before retrying. Never replay an uncertain Send.
-4. If the composer or Send button moves again, inspect the live DOM and make the smallest selector change. Preserve the one-fill/one-click invariant.
-5. Run the upstream `WebPromptSubmission` tests after changing submission logic. The upstream full suite currently has three unrelated Windows file-lock test failures.
+## 后端边界
 
-Do not replace `--backend web` with `auto`; `auto` may consume Codex image usage when the browser path is unavailable.
+普通生成直接使用 Codex 内置图片工具，不依赖 API key 或本地 Python。用户另行明确选择 CLI/API 时，再按对应工具的实际说明处理凭据和计费；不能静默回退。
